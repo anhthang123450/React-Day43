@@ -1,14 +1,16 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Navigation from "./Navigation";
+import Navigation from "./Header/Navigation";
+import HandleLogout from "./Header/HanldeLogout";
 
 const DefaultLayout = () => {
     return (
         <div>
             <Navigation />
-            <div>
+            <HandleLogout />
+            <main>
                 <Outlet />
-            </div>
+            </main>
         </div>
     );
 };

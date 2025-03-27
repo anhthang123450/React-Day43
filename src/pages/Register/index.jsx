@@ -2,149 +2,149 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConfirm, setPasswordConfirm] = useState("");
-    const [error, setError] = useState({});
-
     const navigate = useNavigate();
+    const [formValues, setFormValues] = useState({
+        fullName: "",
+        email: "",
+        password: "",
+        passwordConfirmation: "",
+    });
+
+    const [errors, setErrors] = useState({});
+
+    const setFieldValue = (e) => {
+        setFormValues({
+            ...formValues,
+            [e.target.name]: e.target.value,
+        });
+    };
 
     const getName = (name) => {
-        const nameArr = name.trim().split("");
-        if (nameArr.length === 1) return [nameArr[0], ""];
-        const firstName = nameArr.pop();
-        const lastName = nameArr.join(" ");
+        const parts = name
+            .trim()
+            .split(" ")
+            .map((item) => item);
+        if (parts.length === 1) return [parts[0], ""];
+        const firstName = parts.pop();
+        const lastName = parts.join(" ");
         return [firstName, lastName];
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setError({});
+        console.log(formValues);
+        setErrors({});
 
-        if (!fullName || !email || !password || !passwordConfirm) {
-            setError({ general: "Vui lòng điền đầy đủ thông tin." });
-            return;
+        if (
+            !formValues.fullName ||
+            !formValues.email ||
+            !formValues.password ||
+            !formValues.passwordConfirmation
+        ) {
+            return setErrors({ prinfError: "Vui lòng nhập thông tin đầy đủ" });
         }
 
-        if (password.length < 6) {
-            setError({ password: "Mật khẩu phải có ít nhất 6 ký tự." });
-            return;
+        const [firstName, lastName] = getName(formValues.fullName);
+
+        if (formValues.password !== formValues.passwordConfirmation) {
+            return setErrors({
+                prinfError: "Mật khẩu xác nhận không chính xác",
+            });
         }
 
-        if (password !== passwordConfirm) {
-            setError({ passwordConfirm: "Mật khẩu xác nhận không khớp." });
-            return;
-        }
-
-        const [firstName, lastName] = getName(fullName);
-
-        const requestData = {
+        const formData = {
             firstName,
             lastName,
-            email,
-            password,
-            password_confirmation: passwordConfirm,
+            email: formValues.email,
+            password: formValues.password,
+            password_confirmation: formValues.passwordConfirmation,
         };
 
-        try {
-            const res = await fetch(
-                "https://api01.f8team.dev/api/auth/register",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(requestData),
+        fetch("https://api01.f8team.dev/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+        })
+            .then((res) => {
+                if (!res.ok) throw res;
+                res.json();
+            })
+            .then((data) => {
+                if (data.error) {
+                    return setErrors(data.error);
                 }
-            );
+                alert("Đăng ký thành công");
+                localStorage.setItem("token", data.access_token);
+                navigate("/");
+            })
+            .catch((error) => {
+                const errorMessage = error.error || error.message || "";
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw data;
-            }
-
-            alert("Đăng ký thành công!");
-            localStorage.setItem("token", data.access_token);
-            navigate("/");
-        } catch (error) {
-            console.log("Lỗi đăng ký:", error);
-            const errorMessage = error.error || error.message || "";
-
-            if (error.errors) {
-                setError(error.errors);
-            } else {
-                let newError = {};
-                if (errorMessage.includes("users_email_unique")) {
-                    newError.email = "Email này đã được sử dụng.";
+                if (error.errors) {
+                    setErrors(error.errors);
+                } else if (errorMessage.includes("users_email_unique")) {
+                    setErrors({ email: "Email này đã được sử dụng." });
+                } else if (errorMessage.includes("users_username_unique")) {
+                    setErrors({
+                        fullname:
+                            "Tên người dùng đã được sử dụng. Vui lòng chọn tên khác.",
+                    });
+                } else {
+                    setErrors({
+                        prinfError: "Có lỗi xảy ra. Vui lòng thử lại sau.",
+                    });
                 }
-                if (errorMessage.includes("users_username_unique")) {
-                    newError.fullName =
-                        "Tên người dùng đã được sử dụng. Vui lòng chọn tên khác.";
-                }
-                if (Object.keys(newError).length === 0) {
-                    newError.general = "Lỗi hệ thống. Vui lòng thử lại sau.";
-                }
-                setError(newError);
-            }
-        }
+            });
     };
 
     return (
         <div>
-            <h2>Đăng ký</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Họ và Tên:</label>
+            <form action="" onSubmit={handleSubmit}>
+                <div>
+                    <label htmlFor="">Họ Và tên</label>
                     <input
                         type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
+                        value={formValues.fullName}
+                        name="fullName"
+                        onChange={setFieldValue}
                     />
-                    {error.fullName && (
-                        <p className="error">{error.fullName}</p>
-                    )}
                 </div>
-
-                <div className="form-group">
-                    <label>Email:</label>
+                <div>
+                    <label htmlFor="">Email</label>
                     <input
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
+                        value={formValues.email}
+                        name="email"
+                        onChange={setFieldValue}
                     />
-                    {error.email && <p className="error">{error.email}</p>}
                 </div>
-
-                <div className="form-group">
-                    <label>Mật khẩu:</label>
+                <div>
+                    <label htmlFor="">Mật khẩu</label>
                     <input
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
+                        value={formValues.password}
+                        name="password"
+                        onChange={setFieldValue}
                     />
-                    {error.password && (
-                        <p className="error">{error.password}</p>
-                    )}
                 </div>
-
-                <div className="form-group">
-                    <label>Nhập lại mật khẩu:</label>
+                <div>
+                    <label htmlFor="">Nhập lại mật khẩu</label>
                     <input
                         type="password"
-                        value={passwordConfirm}
-                        onChange={(e) => setPasswordConfirm(e.target.value)}
-                        required
+                        value={formValues.passwordConfirmation}
+                        name="passwordConfirmation"
+                        onChange={setFieldValue}
                     />
-                    {error.passwordConfirm && (
-                        <p className="error">{error.passwordConfirm}</p>
-                    )}
                 </div>
 
                 <button type="submit">Đăng ký</button>
-                {error.general && <p className="error">{error.general}</p>}
+                {errors.prinfError && <p>{errors.prinfError}</p>}
+                {errors.fullname && <p className="error">{errors.fullname}</p>}
+                {errors.email && <p className="error">{errors.email}</p>}
+                {errors.password && <p className="error">{errors.password}</p>}
+                {errors.confirmPassword && (
+                    <p className="error">{errors.confirmPassword}</p>
+                )}
             </form>
         </div>
     );

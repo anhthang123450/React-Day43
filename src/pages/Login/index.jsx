@@ -1,92 +1,72 @@
+import config from "@/config";
 import useQuery from "@/hooks/useQuery";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [user, setUser] = useState({ email: "", password: "" });
-    const [successMessage, setSuccessMessage] = useState("");
-
     const query = useQuery();
     const navigate = useNavigate();
+    const [formValues, setFormValues] = useState({
+        email: "",
+        password: "",
+    });
+    const [hasError, setHasError] = useState(false);
 
     const setFieldValue = (e) => {
-        setErrors({});
-        setUser((prevUser) => ({
-            ...prevUser,
+        setFormValues({
+            ...formValues,
             [e.target.name]: e.target.value,
-        }));
+        });
+        setHasError(false);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        setErrors({});
-        setSuccessMessage("");
-
-        try {
-            const res = await fetch("https://api01.f8team.dev/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(user),
-            });
-
-            const data = await res.json();
-
-            if (data.status === "success") {
+        const formData = {
+            email: formValues.email,
+            password: formValues.password,
+        };
+        fetch("https://api01.f8team.dev/api/auth/login", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(formData),
+        })
+            .then((res) => {
+                if (!res.ok) throw res;
+                return res.json();
+            })
+            .then((data) => {
+                alert("Đăng nhập thành công");
                 localStorage.setItem("token", data.access_token);
-                setSuccessMessage("Đăng nhập thành công!");
-                setTimeout(() => {
-                    navigate(query.get("continue") || "/");
-                }, 1500);
-                return;
-            }
-
-            setErrors({ other: data.message || "Đăng nhập thất bại!" });
-        } catch (error) {
-            setErrors({ other: "Lỗi kết nối, vui lòng thử lại!" });
-        } finally {
-            setIsLoading(false);
-        }
+                navigate(query.get("continue") || config.routes.home);
+            })
+            .catch(() => {
+                setHasError(true);
+            });
     };
 
     return (
         <div>
-            <h2>Đăng nhập</h2>
-
-            <form onSubmit={handleSubmit}>
+            <form action="" onSubmit={handleSubmit}>
                 <div>
-                    <label>
-                        Email:{" "}
-                        <input
-                            type="email"
-                            name="email"
-                            value={user.email}
-                            onChange={setFieldValue}
-                            required
-                        />
-                    </label>
+                    <label htmlFor="">Email</label>
+                    <input
+                        type="email"
+                        value={formValues.email}
+                        name="email"
+                        onChange={setFieldValue}
+                    />
                 </div>
                 <div>
-                    <label>
-                        Password:{" "}
-                        <input
-                            type="password"
-                            name="password"
-                            value={user.password}
-                            onChange={setFieldValue}
-                            required
-                        />
-                    </label>
+                    <label htmlFor="">Password</label>
+                    <input
+                        type="password"
+                        value={formValues.password}
+                        name="password"
+                        onChange={setFieldValue}
+                    />
                 </div>
-                {errors.other && <p>{errors.other}</p>}
-                {successMessage && <p>{successMessage}</p>}{" "}
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? "Đang xử lý..." : "Đăng nhập"}
-                </button>
+                <button>Đăng nhập</button>
             </form>
         </div>
     );

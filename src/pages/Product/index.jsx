@@ -1,19 +1,33 @@
-import useFetch from "@/hooks/useFetch";
+// import useFetch from "@/hooks/useFetch";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import * as httpRequest from "@/utils/httpRequest";
+import config from "@/config";
 
 const Products = () => {
-    const [result, isLoading] = useFetch(
-        "https://api01.f8team.dev/api/products"
-    );
+    // const [result, isLoading] = useFetch(
+    //     "https://api01.f8team.dev/api/products"
+    // );
 
-    if (isLoading) return <div>...Loading</div>;
+    const [products, setProducts] = useState([]);
+
+    useEffect(() => {
+        httpRequest
+            .get("/products")
+            .then((result) => {
+                setProducts(result.data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }, []);
 
     return (
         <div>
             <ul>
-                {result.data.map((product) => (
+                {products.map((product) => (
                     <li key={product.id}>
-                        <Link to={`/products/${product.id}`}>
+                        <Link to={`${config.routes.products}/${product.id}`}>
                             {product.title}
                         </Link>
                     </li>

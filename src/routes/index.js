@@ -1,7 +1,8 @@
 import config from "@/config";
-import AdminLayout from "@/layouts/AdminLayout";
+import DefaultLayout from "@/layouts/DefaultLayout";
 import NoFooterLayout from "@/layouts/NoFooterLayout";
 import NoHeaderLayout from "@/layouts/NoHeaderLayout";
+import User from "@/pages/User";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -17,8 +18,8 @@ const routes = [
     {
         path: config.routes.products,
         component: Products,
-        layout: AdminLayout,
-        // AdminLayout
+        layout: DefaultLayout,
+        protected: true,
     },
     {
         path: config.routes.productDetail,
@@ -42,13 +43,16 @@ const routes = [
     {
         path: config.routes.register,
         component: Register,
-        layout: null,
+    },
+
+    {
+        path: config.routes.user,
+        component: User,
     },
 
     {
         path: config.routes.login,
         component: Login,
-        layout: null,
     },
 ];
 

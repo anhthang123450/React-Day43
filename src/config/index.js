@@ -8,6 +8,7 @@ const config = {
         contact: "/contact",
         register: "/register",
         login: "/login",
+        user: "/user",
     },
 };
 
